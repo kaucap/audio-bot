@@ -1,4 +1,8 @@
+from bot_commands import set_default_commands
+
+
 async def on_startup(dp):
+    await set_default_commands(dp)
     print('Запуск бота')
 
 if __name__ == '__main__':

@@ -34,7 +34,7 @@ async def looking_book(message: types.Message, state: FSMContext):
             await state.reset_state()
 
 
-@dp.callback_query_handler(text="next_page", state=FindBook.next_page)
+@dp.callback_query_handler(text="next_page", state=FindBook)
 async def new_page(message: types.Message, state: FSMContext):
     await message.answer('Приступаю к поиску')
     data = await state.get_data()
@@ -47,9 +47,9 @@ async def new_page(message: types.Message, state: FSMContext):
         await state.reset_state()
 
 
-@dp.callback_query_handler(text="cancel", state=FindBook.cancel)
-async def cancel(call: CallbackQuery, message: types.Message, state: FSMContext):
+@dp.callback_query_handler(text="cancel", state=FindBook)
+async def cancel(call: CallbackQuery, state: FSMContext):
     await call.answer("Вы отменили текущую комманду")
     await call.message.edit_reply_markup()
+    await call.message.answer('Для просмотра всего функционала, воспользуйтесь коммандой /help')
     await state.reset_state()
-    await message.answer('Для просмотра всего функционала, воспользуйтесь коммандой /help')

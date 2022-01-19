@@ -5,4 +5,3 @@ class FindBook(StatesGroup):
     book = State()
     result = State()
     next_page = State()
-    cancel = State()
