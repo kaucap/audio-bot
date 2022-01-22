@@ -2,40 +2,41 @@ from aiogram import types
 from aiogram.types import ReplyKeyboardRemove
 from aiogram.dispatcher.filters import Command
 from aiogram.dispatcher.storage import FSMContext
-from request import find_book, find_book_next_page
+from request import find_new_book, find_book_next_page
 
 from loader import dp, bot
-from states import FindBook
+from states import FindNewBook
 from keyboard.default.next_page_buttons import choice
 
 
-@dp.message_handler(Command("find_book"))
-async def choose_book(message: types.Message):
-    await message.answer('Введите автора или название книги')
-    await FindBook.book.set()
+@dp.message_handler(Command("new_book"))
+async def looking_new_book(message: types.Message):
+    await message.answer('Приступаем к поиску новых книг? :)', reply_markup=choice)
+    await FindNewBook.book.set()
 
 
-@dp.message_handler(state=FindBook.book)
-async def looking_book(message: types.Message, state: FSMContext):
+@dp.message_handler(state=FindNewBook.book)
+async def result(message: types.Message, state: FSMContext):
     answer = message.text
-    if len(answer) > 200:
-        await message.answer('Максимально допустимое количество символов - 200. Попробуйте снова')
-        await FindBook.book.set()
-    else:
-        await state.update_data(book=answer)
-        await message.answer('Приступаю к поиску')
-        data = await state.get_data()
-        book_result = await find_book(answer=data["book"], message=message, bot=bot)
+    if answer == "Да ✅" or answer == "Да":
+        await message.answer('Хорошо, сейчас покажу книги')
+        book_result = await find_new_book(message=message, bot=bot)
         if book_result:
             await state.update_data(next_page_url=book_result)
             await message.answer('Показать книги со следующей страницы?', reply_markup=choice)
-            await FindBook.choice.set()
+            await FindNewBook.choice.set()
         else:
             await message.answer('Книг больше нет')
             await state.reset_state()
+    elif answer == "Нет ❌" or answer == "Нет":
+        await message.answer('Вы отменили поиск книг. Для ознакомления со всем функционалом бота введите /help')
+        await state.reset_state()
+    else:
+        await message.answer('Ошибка ввода! ⛔ \nВведите "Да" или "Нет"')
+        await FindNewBook.book.set()
 
 
-@dp.message_handler(state=FindBook.choice)
+@dp.message_handler(state=FindNewBook.choice)
 async def result(message: types.Message, state: FSMContext):
     answer = message.text
     if answer == "Да ✅" or answer == "Да":
@@ -45,10 +46,9 @@ async def result(message: types.Message, state: FSMContext):
         if book_result:
             await state.update_data(next_page_url=book_result)
             await message.answer('Показать книги со следующей страницы?', reply_markup=choice)
-            await FindBook.choice.set()
+            await FindNewBook.choice.set()
         else:
             await message.answer('Книг больше нет')
-            await message.answer('Для того чтобы посмотреть список возможных команд введите /help')
             await state.reset_state()
     elif answer == "Нет ❌" or answer == "Нет":
         await message.answer('Хорошо, поиск книг завершен.\nЧтобы узнать весь функционал введите комманду /help',
@@ -56,6 +56,4 @@ async def result(message: types.Message, state: FSMContext):
         await state.reset_state()
     else:
         await message.answer('Ошибка ввода! ⛔ \nВведите "Да" или "Нет"')
-        await FindBook.choice.set()
-
-
+        await FindNewBook.choice.set()

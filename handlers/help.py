@@ -10,7 +10,10 @@ async def bot_help(message: types.Message):
         'Список комманд',
         '/start - запустить бота',
         '/help - получить справку',
-        '/find_book - поиск книги по названию'
+        '/find_book - поиск книги по названию',
+        '/new_book - поиск новых книг',
+        '/best_book - поиск лучших книг',
+        '/paid_book - поиск платных книг',
     ]
 
     await message.answer('\n'.join(text))
