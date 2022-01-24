@@ -56,56 +56,44 @@ async def book_information(book):
     return information
 
 
+async def give_book_info(response, bot, message):
+    html = await response.text()
+    soup = BeautifulSoup(html, "lxml")
+    paging = soup.find("div", class_="paging")
+    paging_exist = paging.find("a", class_='page__nav--next')
+    books = soup.find_all("div", class_="content__main__articles--item")
+    for book in books:
+        info = await book_information(book)
+
+        await bot.send_photo(chat_id=message.from_user.id, photo=info.get("photo_url"),
+                             caption=f'Автор: {info.get("author")}\nНазвание книги: {info.get("book_name")}\n'
+                                     f'Жанр: {info.get("genre")}\nИсполнитель: {info.get("performer")}\n'
+                                     f'Длительность книги: {info.get("time")}\n'
+                                     f'Описание: {info.get("book_description")}\n'
+                                     f'Ссылка: {info.get("book_url")}')
+
+    if paging_exist:
+        return paging.find("a", class_='page__nav--next').get('href')
+    else:
+        return None
+
+
 async def find_book(answer, bot, message):
     async with aiohttp.ClientSession() as session:
         adapted_answer = answer.replace(' ', '%20')
         ua = UserAgent()
         async with session.get(url=f'https://akniga.org/search/books?q={adapted_answer}',
                                headers={'user-agent': f'{ua.random}'}) as response:
-            html = await response.text()
-            soup = BeautifulSoup(html, "lxml")
-            paging = soup.find("div", class_="paging")
-            books = soup.find_all("div", class_="content__main__articles--item")
-            for book in books:
-                info = await book_information(book)
-
-                await bot.send_photo(chat_id=message.from_user.id, photo=info.get("photo_url"),
-                                     caption=f'Автор: {info.get("author")}\nНазвание книги: {info.get("book_name")}\n'
-                                             f'Жанр: {info.get("genre")}\nИсполнитель: {info.get("performer")}\n'
-                                             f'Длительность книги: {info.get("time")}\n'
-                                             f'Описание: {info.get("book_description")}\n'
-                                             f'Ссылка: {info.get("book_url")}')
-
-            if paging:
-                return paging.find("a", class_='page__nav--next').get('href')
-            else:
-                return None
+            book_info = await give_book_info(response=response, bot=bot, message=message)
+            return book_info
 
 
 async def find_book_next_page(url, bot, message):
     async with aiohttp.ClientSession() as session:
         ua = UserAgent()
         async with session.get(url=url, headers={'user-agent': f'{ua.random}'}) as response:
-            html = await response.text()
-            soup = BeautifulSoup(html, "lxml")
-            paging = soup.find("div", class_="paging")
-            paging_exist = paging.find("a", class_='page__nav--next')
-            books = soup.find_all("div", class_="content__main__articles--item")
-
-            for book in books:
-                info = await book_information(book)
-
-                await bot.send_photo(chat_id=message.from_user.id, photo=info.get("photo_url"),
-                                     caption=f'Автор: {info.get("author")}\nНазвание книги: {info.get("book_name")}\n'
-                                             f'Жанр: {info.get("genre")}\nИсполнитель: {info.get("performer")}\n'
-                                             f'Длительность книги: {info.get("time")}\n'
-                                             f'Описание: {info.get("book_description")}\n'
-                                             f'Ссылка: {info.get("book_url")}')
-
-            if paging_exist:
-                return paging.find("a", class_='page__nav--next').get('href')
-            else:
-                return None
+            book_info = await give_book_info(response=response, bot=bot, message=message)
+            return book_info
 
 
 async def find_new_book(bot, message):
@@ -113,25 +101,8 @@ async def find_new_book(bot, message):
         ua = UserAgent()
         async with session.get(url='https://akniga.org/index/',
                                headers={'user-agent': f'{ua.random}'}) as response:
-            html = await response.text()
-            soup = BeautifulSoup(html, "lxml")
-            paging = soup.find("div", class_="paging")
-            books = soup.find_all("div", class_="content__main__articles--item")
-
-            for book in books:
-                info = await book_information(book)
-
-                await bot.send_photo(chat_id=message.from_user.id, photo=info.get("photo_url"),
-                                     caption=f'Автор: {info.get("author")}\nНазвание книги: {info.get("book_name")}\n'
-                                             f'Жанр: {info.get("genre")}\nИсполнитель: {info.get("performer")}\n'
-                                             f'Длительность книги: {info.get("time")}\n'
-                                             f'Описание: {info.get("book_description")}\n'
-                                             f'Ссылка: {info.get("book_url")}')
-
-            if paging:
-                return paging.find("a", class_='page__nav--next').get('href')
-            else:
-                return None
+            book_info = await give_book_info(response=response, bot=bot, message=message)
+            return book_info
 
 
 async def best_book_day(bot, message):
@@ -159,25 +130,8 @@ async def best_book_week(bot, message):
         ua = UserAgent()
         async with session.get(url='https://akniga.org/index/top?period=7',
                                headers={'user-agent': f'{ua.random}'}) as response:
-            html = await response.text()
-            soup = BeautifulSoup(html, "lxml")
-            paging = soup.find("div", class_="paging")
-            books = soup.find_all("div", class_="content__main__articles--item")
-
-            for book in books:
-                info = await book_information(book)
-
-                await bot.send_photo(chat_id=message.from_user.id, photo=info.get("photo_url"),
-                                     caption=f'Автор: {info.get("author")}\nНазвание книги: {info.get("book_name")}\n'
-                                             f'Жанр: {info.get("genre")}\nИсполнитель: {info.get("performer")}\n'
-                                             f'Длительность книги: {info.get("time")}\n'
-                                             f'Описание: {info.get("book_description")}\n'
-                                             f'Ссылка: {info.get("book_url")}')
-
-            if paging:
-                return paging.find("a", class_='page__nav--next').get('href')
-            else:
-                return None
+            book_info = await give_book_info(response=response, bot=bot, message=message)
+            return book_info
 
 
 async def best_book_month(bot, message):
@@ -185,25 +139,8 @@ async def best_book_month(bot, message):
         ua = UserAgent()
         async with session.get(url='https://akniga.org/index/top?period=30',
                                headers={'user-agent': f'{ua.random}'}) as response:
-            html = await response.text()
-            soup = BeautifulSoup(html, "lxml")
-            paging = soup.find("div", class_="paging")
-            books = soup.find_all("div", class_="content__main__articles--item")
-
-            for book in books:
-                info = await book_information(book)
-
-                await bot.send_photo(chat_id=message.from_user.id, photo=info.get("photo_url"),
-                                     caption=f'Автор: {info.get("author")}\nНазвание книги: {info.get("book_name")}\n'
-                                             f'Жанр: {info.get("genre")}\nИсполнитель: {info.get("performer")}\n'
-                                             f'Длительность книги: {info.get("time")}\n'
-                                             f'Описание: {info.get("book_description")}\n'
-                                             f'Ссылка: {info.get("book_url")}')
-
-            if paging:
-                return paging.find("a", class_='page__nav--next').get('href')
-            else:
-                return None
+            book_info = await give_book_info(response=response, bot=bot, message=message)
+            return book_info
 
 
 async def best_book_all_time(bot, message):
@@ -211,22 +148,80 @@ async def best_book_all_time(bot, message):
         ua = UserAgent()
         async with session.get(url='https://akniga.org/index/top?period=all',
                                headers={'user-agent': f'{ua.random}'}) as response:
-            html = await response.text()
-            soup = BeautifulSoup(html, "lxml")
-            paging = soup.find("div", class_="paging")
-            books = soup.find_all("div", class_="content__main__articles--item")
+            book_info = await give_book_info(response=response, bot=bot, message=message)
+            return book_info
 
-            for book in books:
-                info = await book_information(book)
 
-                await bot.send_photo(chat_id=message.from_user.id, photo=info.get("photo_url"),
-                                     caption=f'Автор: {info.get("author")}\nНазвание книги: {info.get("book_name")}\n'
-                                             f'Жанр: {info.get("genre")}\nИсполнитель: {info.get("performer")}\n'
-                                             f'Длительность книги: {info.get("time")}\n'
-                                             f'Описание: {info.get("book_description")}\n'
-                                             f'Ссылка: {info.get("book_url")}')
+async def paid_book_new(bot, message):
+    async with aiohttp.ClientSession() as session:
+        ua = UserAgent()
+        async with session.get(url='https://akniga.org/paid/',
+                               headers={'user-agent': f'{ua.random}'}) as response:
+            book_info = await give_book_info(response=response, bot=bot, message=message)
+            return book_info
 
-            if paging:
-                return paging.find("a", class_='page__nav--next').get('href')
-            else:
-                return None
+
+async def paid_book_best(bot, message):
+    async with aiohttp.ClientSession() as session:
+        ua = UserAgent()
+        async with session.get(url='https://akniga.org/paid/top?period=all',
+                               headers={'user-agent': f'{ua.random}'}) as response:
+            book_info = await give_book_info(response=response, bot=bot, message=message)
+            return book_info
+
+
+async def paid_book_popular(bot, message):
+    async with aiohttp.ClientSession() as session:
+        ua = UserAgent()
+        async with session.get(url='https://akniga.org/paid/discussed/?period=all',
+                               headers={'user-agent': f'{ua.random}'}) as response:
+            book_info = await give_book_info(response=response, bot=bot, message=message)
+            return book_info
+
+
+async def get_genre(data):
+    genre = data["genre"]
+    if genre == 'Фантастика 🛸':
+        appropriate_genre = 'fantasy'
+    elif genre == 'Детективы 🕵️‍♂️':
+        appropriate_genre = 'detective'
+    elif genre == 'Роман ❤️':
+        appropriate_genre = 'roman'
+    elif genre == 'Психология 📚':
+        appropriate_genre = 'psihologiya'
+    elif genre == 'Классика ✨':
+        appropriate_genre = 'classic'
+    else:
+        appropriate_genre = 'uzhasy_mistika'
+
+    return appropriate_genre
+
+
+async def new_book_by_genre(bot, message, data):
+    async with aiohttp.ClientSession() as session:
+        genre = await get_genre(data)
+        ua = UserAgent()
+        async with session.get(url=f'https://akniga.org/section/{genre}/',
+                               headers={'user-agent': f'{ua.random}'}) as response:
+            book_info = await give_book_info(response=response, bot=bot, message=message)
+            return book_info
+
+
+async def best_book_by_genre(bot, message, data):
+    async with aiohttp.ClientSession() as session:
+        genre = await get_genre(data)
+        ua = UserAgent()
+        async with session.get(url=f'https://akniga.org/section/{genre}/top/?period=all',
+                               headers={'user-agent': f'{ua.random}'}) as response:
+            book_info = await give_book_info(response=response, bot=bot, message=message)
+            return book_info
+
+
+async def popular_book_by_genre(bot, message, data):
+    async with aiohttp.ClientSession() as session:
+        genre = await get_genre(data)
+        ua = UserAgent()
+        async with session.get(url=f'https://akniga.org/section/{genre}/discussed/?period=all',
+                               headers={'user-agent': f'{ua.random}'}) as response:
+            book_info = await give_book_info(response=response, bot=bot, message=message)
+            return book_info
