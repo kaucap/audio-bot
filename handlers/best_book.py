@@ -8,24 +8,30 @@ from loader import dp, bot
 from states import BestBook
 from keyboard.default.period_of_time_buttons import choose_time
 from keyboard.default.next_page_buttons import choice
+from loguru import logger
 
 
+@logger.catch()
 @dp.message_handler(Command("best_book"))
 async def looking_new_book(message: types.Message):
+    logger.info(f'Клиент с id: {message.from_user.id} запустил команду /best_book')
     await message.answer('Выберите за какой промежуток времени мне вывести лучшие книги?', reply_markup=choose_time)
     await BestBook.choice.set()
 
 
+@logger.catch()
 @dp.message_handler(state=BestBook.choice)
 async def choosing_time(message: types.Message, state: FSMContext):
     answer = message.text
     if answer == 'День ✨':
+        logger.info('Бот приступил к выполнению команды /best_book')
         await message.answer('Хорошо, сейчас покажу книги', reply_markup=ReplyKeyboardRemove())
         await best_book_day(message=message, bot=bot)
         await message.answer('Книг больше нет')
         await message.answer('Для того чтобы посмотреть список возможных команд введите /help')
         await state.reset_state()
     elif answer == 'Неделя 💫':
+        logger.info('Бот приступил к выполнению команды /best_book')
         await message.answer('Хорошо, сейчас покажу книги', reply_markup=ReplyKeyboardRemove())
         book_result = await best_book_week(message=message, bot=bot)
         if book_result:
@@ -37,6 +43,7 @@ async def choosing_time(message: types.Message, state: FSMContext):
             await message.answer('Для того чтобы посмотреть список возможных команд введите /help')
             await state.reset_state()
     elif answer == 'Месяц ⭐️':
+        logger.info('Бот приступил к выполнению команды /best_book')
         await message.answer('Хорошо, сейчас покажу книги', reply_markup=ReplyKeyboardRemove())
         book_result = await best_book_month(message=message, bot=bot)
         if book_result:
@@ -48,6 +55,7 @@ async def choosing_time(message: types.Message, state: FSMContext):
             await message.answer('Для того чтобы посмотреть список возможных команд введите /help')
             await state.reset_state()
     elif answer == 'За всё время 💥':
+        logger.info('Бот приступил к выполнению команды /best_book')
         await message.answer('Хорошо, сейчас покажу книги', reply_markup=ReplyKeyboardRemove())
         book_result = await best_book_all_time(message=message, bot=bot)
         if book_result:
@@ -63,10 +71,12 @@ async def choosing_time(message: types.Message, state: FSMContext):
         await BestBook.choice.set()
 
 
+@logger.catch()
 @dp.message_handler(state=BestBook.next_page)
 async def next_page(message: types.Message, state: FSMContext):
     answer = message.text
     if answer == "Да ✅" or answer == "Да":
+        logger.info('Бот приступил к открытию следующей страницы в команде /best_book')
         await message.answer('Хорошо, сейчас покажу книги', reply_markup=ReplyKeyboardRemove())
         data = await state.get_data()
         book_result = await find_book_next_page(url=data["next_page_url"], message=message, bot=bot)

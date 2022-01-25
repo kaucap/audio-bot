@@ -7,14 +7,18 @@ from request import find_book, find_book_next_page
 from loader import dp, bot
 from states import FindBook
 from keyboard.default.next_page_buttons import choice
+from loguru import logger
 
 
+@logger.catch()
 @dp.message_handler(Command("find_book"))
 async def choose_book(message: types.Message):
+    logger.info(f'Клиент с id: {message.from_user.id} запустил команду /find_book')
     await message.answer('Введите автора или название книги')
     await FindBook.book.set()
 
 
+@logger.catch()
 @dp.message_handler(state=FindBook.book)
 async def looking_book(message: types.Message, state: FSMContext):
     answer = message.text
@@ -24,6 +28,7 @@ async def looking_book(message: types.Message, state: FSMContext):
     else:
         await state.update_data(book=answer)
         await message.answer('Приступаю к поиску')
+        logger.info('Бот приступил к выполнению команды /find_book')
         data = await state.get_data()
         book_result = await find_book(answer=data["book"], message=message, bot=bot)
         if book_result:
@@ -35,10 +40,12 @@ async def looking_book(message: types.Message, state: FSMContext):
             await state.reset_state()
 
 
+@logger.catch()
 @dp.message_handler(state=FindBook.choice)
 async def result(message: types.Message, state: FSMContext):
     answer = message.text
     if answer == "Да ✅" or answer == "Да":
+        logger.info('Бот приступил к открытию следующей страницы в команде /find_book')
         await message.answer('Хорошо, сейчас покажу книги', reply_markup=ReplyKeyboardRemove())
         data = await state.get_data()
         book_result = await find_book_next_page(url=data["next_page_url"], message=message, bot=bot)

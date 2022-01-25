@@ -2,10 +2,13 @@ from aiogram import types
 from aiogram.dispatcher.filters.builtin import CommandHelp
 
 from loader import dp
+from loguru import logger
 
 
+@logger.catch()
 @dp.message_handler(CommandHelp())
 async def bot_help(message: types.Message):
+    logger.info(f'Клиент с id: {message.from_user.id} запустил команду /help')
     text = [
         'Список комманд',
         '/start - запустить бота 💻',

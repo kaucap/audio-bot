@@ -9,14 +9,18 @@ from states import Genres
 from keyboard.default.next_page_buttons import choice
 from keyboard.default.genres_buttons import genres
 from keyboard.default.type_of_book_buttons import choose_type
+from loguru import logger
 
 
+@logger.catch()
 @dp.message_handler(Command('genres'))
 async def choosing_genre(message: types.Message):
+    logger.info(f'Клиент с id: {message.from_user.id} запустил команду /genres')
     await message.answer('Выберите один из жанров', reply_markup=genres)
     await Genres.choice.set()
 
 
+@logger.catch()
 @dp.message_handler(state=Genres.choice)
 async def choosing_type_of_book(message: types.Message, state: FSMContext):
     genre_types = ['Фантастика 🛸', 'Детективы 🕵️‍♂️', 'Роман ❤️', 'Психология 📚', 'Классика ✨', 'Ужасы 👀']
@@ -30,10 +34,12 @@ async def choosing_type_of_book(message: types.Message, state: FSMContext):
         await Genres.choice.set()
 
 
+@logger.catch()
 @dp.message_handler(state=Genres.choose_type)
 async def result(message: types.Message, state: FSMContext):
     answer = message.text
     if answer == 'Новые 🆕':
+        logger.info('Бот приступил к выполнению команды /genres')
         await message.answer('Хорошо, приступаю к поиску', reply_markup=ReplyKeyboardRemove())
         data = await state.get_data()
         book_result = await new_book_by_genre(message=message, bot=bot, data=data)
@@ -46,6 +52,7 @@ async def result(message: types.Message, state: FSMContext):
             await message.answer('Для того чтобы посмотреть список возможных команд введите /help')
             await state.reset_state()
     elif answer == 'Лучшие 🔥':
+        logger.info('Бот приступил к выполнению команды /genres')
         await message.answer('Хорошо, приступаю к поиску', reply_markup=ReplyKeyboardRemove())
         data = await state.get_data()
         book_result = await best_book_by_genre(message=message, bot=bot, data=data)
@@ -58,6 +65,7 @@ async def result(message: types.Message, state: FSMContext):
             await message.answer('Для того чтобы посмотреть список возможных команд введите /help')
             await state.reset_state()
     elif answer == 'Обсуждаемые 🗣':
+        logger.info('Бот приступил к выполнению команды /genres')
         await message.answer('Хорошо, приступаю к поиску', reply_markup=ReplyKeyboardRemove())
         data = await state.get_data()
         book_result = await popular_book_by_genre(message=message, bot=bot, data=data)
@@ -74,10 +82,12 @@ async def result(message: types.Message, state: FSMContext):
         await Genres.choose_type.set()
 
 
+@logger.catch()
 @dp.message_handler(state=Genres.next_page)
 async def next_page_book(message: types.Message, state: FSMContext):
     answer = message.text
     if answer == "Да ✅" or answer == "Да":
+        logger.info('Бот приступил к открытию следующей страницы в команде /genres')
         await message.answer('Хорошо, сейчас покажу книги', reply_markup=ReplyKeyboardRemove())
         data = await state.get_data()
         book_result = await find_book_next_page(url=data["next_page_url"], message=message, bot=bot)
