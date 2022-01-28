@@ -2,6 +2,8 @@ from aiogram import types
 from aiogram.types import ReplyKeyboardRemove
 from aiogram.dispatcher.filters import Command
 from aiogram.dispatcher.storage import FSMContext
+
+from db_api.schemas.user_request import Info
 from request import find_book_next_page, best_book_day, best_book_week, best_book_month, best_book_all_time
 
 from loader import dp, bot
@@ -9,11 +11,18 @@ from states import BestBook
 from keyboard.default.period_of_time_buttons import choose_time
 from keyboard.default.next_page_buttons import choice
 from loguru import logger
+from db_api import sql_commands as command
 
 
 @logger.catch()
 @dp.message_handler(Command("best_book"))
+@dp.throttled(rate=5)
 async def looking_new_book(message: types.Message):
+    search_book_info = await command.choose_info(user_id=message.from_user.id)
+    request = 'Поиск лучших книг'
+    if len(search_book_info) >= 20:
+        await Info.delete.where(message.from_user.id == Info.id).gino.status()
+    await command.add_info(id=message.from_user.id, request=request)
     logger.info(f'Клиент с id: {message.from_user.id} запустил команду /best_book')
     await message.answer('Выберите за какой промежуток времени мне вывести лучшие книги?', reply_markup=choose_time)
     await BestBook.choice.set()
@@ -34,37 +43,55 @@ async def choosing_time(message: types.Message, state: FSMContext):
         logger.info('Бот приступил к выполнению команды /best_book')
         await message.answer('Хорошо, сейчас покажу книги', reply_markup=ReplyKeyboardRemove())
         book_result = await best_book_week(message=message, bot=bot)
-        if book_result:
-            await state.update_data(next_page_url=book_result)
-            await message.answer('Показать книги со следующей страницы?', reply_markup=choice)
-            await BestBook.next_page.set()
-        else:
-            await message.answer('Книг больше нет')
-            await message.answer('Для того чтобы посмотреть список возможных команд введите /help')
+        try:
+            if book_result:
+                await state.update_data(next_page_url=book_result)
+                await message.answer('Показать книги со следующей страницы?', reply_markup=choice)
+                await BestBook.next_page.set()
+            else:
+                await message.answer('Книг больше нет')
+                await message.answer('Для того чтобы посмотреть список возможных команд введите /help')
+                await state.reset_state()
+        except AttributeError:
+            logger.error('Ошибка AttributeError')
+            await message.answer('В ходе поиска возникла ошибка, попробуйте снова.\n'
+                                 'Для этого пропишите команду /best_book')
             await state.reset_state()
     elif answer == 'Месяц ⭐️':
         logger.info('Бот приступил к выполнению команды /best_book')
         await message.answer('Хорошо, сейчас покажу книги', reply_markup=ReplyKeyboardRemove())
         book_result = await best_book_month(message=message, bot=bot)
-        if book_result:
-            await state.update_data(next_page_url=book_result)
-            await message.answer('Показать книги со следующей страницы?', reply_markup=choice)
-            await BestBook.next_page.set()
-        else:
-            await message.answer('Книг больше нет')
-            await message.answer('Для того чтобы посмотреть список возможных команд введите /help')
+        try:
+            if book_result:
+                await state.update_data(next_page_url=book_result)
+                await message.answer('Показать книги со следующей страницы?', reply_markup=choice)
+                await BestBook.next_page.set()
+            else:
+                await message.answer('Книг больше нет')
+                await message.answer('Для того чтобы посмотреть список возможных команд введите /help')
+                await state.reset_state()
+        except AttributeError:
+            logger.error('Ошибка AttributeError')
+            await message.answer('В ходе поиска возникла ошибка, попробуйте снова.\n'
+                                 'Для этого пропишите команду /best_book')
             await state.reset_state()
     elif answer == 'За всё время 💥':
         logger.info('Бот приступил к выполнению команды /best_book')
         await message.answer('Хорошо, сейчас покажу книги', reply_markup=ReplyKeyboardRemove())
         book_result = await best_book_all_time(message=message, bot=bot)
-        if book_result:
-            await state.update_data(next_page_url=book_result)
-            await message.answer('Показать книги со следующей страницы?', reply_markup=choice)
-            await BestBook.next_page.set()
-        else:
-            await message.answer('Книг больше нет')
-            await message.answer('Для того чтобы посмотреть список возможных команд введите /help')
+        try:
+            if book_result:
+                await state.update_data(next_page_url=book_result)
+                await message.answer('Показать книги со следующей страницы?', reply_markup=choice)
+                await BestBook.next_page.set()
+            else:
+                await message.answer('Книг больше нет')
+                await message.answer('Для того чтобы посмотреть список возможных команд введите /help')
+                await state.reset_state()
+        except AttributeError:
+            logger.error('Ошибка AttributeError')
+            await message.answer('В ходе поиска возникла ошибка, попробуйте снова.\n'
+                                 'Для этого пропишите команду /best_book')
             await state.reset_state()
     else:
         await message.answer('Ошибка ввода! ⛔ \nВыберите один из предложенных вариантов!')
@@ -80,13 +107,19 @@ async def next_page(message: types.Message, state: FSMContext):
         await message.answer('Хорошо, сейчас покажу книги', reply_markup=ReplyKeyboardRemove())
         data = await state.get_data()
         book_result = await find_book_next_page(url=data["next_page_url"], message=message, bot=bot)
-        if book_result:
-            await state.update_data(next_page_url=book_result)
-            await message.answer('Показать книги со следующей страницы?', reply_markup=choice)
-            await BestBook.next_page.set()
-        else:
-            await message.answer('Книг больше нет')
-            await message.answer('Для того чтобы посмотреть список возможных команд введите /help')
+        try:
+            if book_result:
+                await state.update_data(next_page_url=book_result)
+                await message.answer('Показать книги со следующей страницы?', reply_markup=choice)
+                await BestBook.next_page.set()
+            else:
+                await message.answer('Книг больше нет')
+                await message.answer('Для того чтобы посмотреть список возможных команд введите /help')
+                await state.reset_state()
+        except AttributeError:
+            logger.error('Ошибка AttributeError')
+            await message.answer('В ходе поиска возникла ошибка, попробуйте снова.\n'
+                                 'Для этого пропишите команду /best_book')
             await state.reset_state()
     elif answer == "Нет ❌" or answer == "Нет":
         await message.answer('Хорошо, поиск книг завершен.\nЧтобы узнать весь функционал введите комманду /help',

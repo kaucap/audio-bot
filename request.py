@@ -13,6 +13,8 @@ async def book_information(book):
     book_description = book.find("a", class_="content__article-main-link").find("span")
     book_description_finished = book_description.text.strip()
 
+    author_finished = None
+    performer_finished = None
     author_and_performer_exist = book.find_all("span", class_="link__action")
     if len(author_and_performer_exist) == 3:
         author = book.find("div", class_="additional-info").find("div", class_="oneline")
@@ -66,11 +68,11 @@ async def give_book_info(response, bot, message):
         info = await book_information(book)
 
         await bot.send_photo(chat_id=message.from_user.id, photo=info.get("photo_url"),
-                             caption=f'Автор: {info.get("author")}\nНазвание книги: {info.get("book_name")}\n'
-                                     f'Жанр: {info.get("genre")}\nИсполнитель: {info.get("performer")}\n'
-                                     f'Длительность книги: {info.get("time")}\n'
-                                     f'Описание: {info.get("book_description")}\n'
-                                     f'Ссылка: {info.get("book_url")}')
+                             caption=f'🖊  Автор: {info.get("author")}\n📖  Название книги: {info.get("book_name")}\n'
+                                     f'📌  Жанр: {info.get("genre")}\n🔈  Исполнитель: {info.get("performer")}\n'
+                                     f'🕰  Длительность книги: {info.get("time")}\n'
+                                     f'\n🗒  Описание: {info.get("book_description")}\n'
+                                     f'\n📥  Ссылка: {info.get("book_url")}')
 
     if paging_exist:
         return paging.find("a", class_='page__nav--next').get('href')

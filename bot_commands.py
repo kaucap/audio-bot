@@ -9,5 +9,7 @@ async def set_default_commands(dp):
         types.BotCommand("new_book", "Поиск новых книг 🆕"),
         types.BotCommand("best_book", "Поиск лучших книг ⭐️"),
         types.BotCommand("paid_book", "Поиск платных книг 💰"),
-        types.BotCommand("genres", "Поиск книг по жанрам ✅")
+        types.BotCommand("genres", "Поиск книг по жанрам ✅"),
+        types.BotCommand("history", "История поиска книг 📖"),
+        types.BotCommand("clear", "Очистить историю поиска 🚮")
     ])
