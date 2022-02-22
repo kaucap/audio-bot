@@ -2,7 +2,6 @@ from bot_commands import set_default_commands
 from loguru import logger
 from db_api import db_gino
 from db_api.db_gino import db
-import middlewares
 from middlewares.throttling import ThrottlingMiddleware
 
 logger.add("debug.log", format="{time} {level} {message}", level="DEBUG", rotation="1 week",

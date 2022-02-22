@@ -17,12 +17,14 @@ async def book_information(book):
     performer_finished = None
     author_and_performer_exist = book.find_all("span", class_="link__action")
     if len(author_and_performer_exist) == 3:
-        author = book.find("div", class_="additional-info").find("div", class_="oneline")
-        author_continue = author.find("span", class_="link__action").find("a")
-        author_finished = author_continue.text.strip()
-        performer = book.find("div", class_="additional-info").find("div", class_="oneline")
-        performer_continue = performer.find_all("span", class_="link__action")
-        performer_finished = performer_continue[1].find("a").text.strip()
+        common_information = book.find("div", class_="additional-info").find("div", class_="oneline")
+        author = common_information.find("span", class_="link__action").find("a")
+        author_finished = author.text.strip()
+        try:
+            performer = common_information.find_all("span", class_="link__action")
+            performer_finished = performer[1].find("a").text.strip()
+        except AttributeError:
+            performer_finished = 'Неизвестный'
     elif len(author_and_performer_exist) == 2:
         check_value = book.find_all("span", class_="link__action")
         check_value_finished = check_value[0].find("svg", class_="icon").find("use")
@@ -61,21 +63,27 @@ async def book_information(book):
 async def give_book_info(response, bot, message):
     html = await response.text()
     soup = BeautifulSoup(html, "lxml")
-    paging = soup.find("div", class_="paging")
-    paging_exist = paging.find("a", class_='page__nav--next')
     books = soup.find_all("div", class_="content__main__articles--item")
-    for book in books:
-        info = await book_information(book)
+    if books:
+        for book in books:
+            info = await book_information(book)
 
-        await bot.send_photo(chat_id=message.from_user.id, photo=info.get("photo_url"),
-                             caption=f'🖊  Автор: {info.get("author")}\n📖  Название книги: {info.get("book_name")}\n'
-                                     f'📌  Жанр: {info.get("genre")}\n🔈  Исполнитель: {info.get("performer")}\n'
-                                     f'🕰  Длительность книги: {info.get("time")}\n'
-                                     f'\n🗒  Описание: {info.get("book_description")}\n'
-                                     f'\n📥  Ссылка: {info.get("book_url")}')
+            await bot.send_photo(chat_id=message.from_user.id, photo=info.get("photo_url"),
+                                 caption=f'🖊  Автор: {info.get("author")}\n📖  Название книги: {info.get("book_name")}\n'
+                                         f'📌  Жанр: {info.get("genre")}\n🔈  Исполнитель: {info.get("performer")}\n'
+                                         f'🕰  Длительность книги: {info.get("time")}\n'
+                                         f'\n🗒  Описание: {info.get("book_description")}\n'
+                                         f'\n📥  Ссылка: {info.get("book_url")}')
+    else:
+        await message.answer('К сожалению поиск не дал результатов. Попробуйте ввести другие данные')
 
-    if paging_exist:
-        return paging.find("a", class_='page__nav--next').get('href')
+    paging = soup.find("div", class_="paging")
+    if paging:
+        paging_exist = paging.find("a", class_='page__nav--next')
+        if paging_exist:
+            return paging.find("a", class_='page__nav--next').get('href')
+        else:
+            return None
     else:
         return None
 
