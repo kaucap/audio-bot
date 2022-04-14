@@ -11,3 +11,7 @@ PGPASSWORD = config('PGPASSWORD')
 DATABASE = config('DATABASE')
 ip = '127.0.0.1'
 POSTGRES_URI = f'postgresql://{PGUSER}:{PGPASSWORD}@{ip}/{DATABASE}'
+
+
+# loop = asyncio.get_event_loop()
+# db = loop.run_until_complete(Database.create())
