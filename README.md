@@ -37,10 +37,10 @@
 ## Скриншоты бота
 
 <p align="center">
-<img src="./readme_assets/second%20photo.jpg" width="30%"></p>
+<img src="./readme_assets/second%20photo.jpg" width="25%"></p>
 
 <p align="center">
-<img src="./readme_assets/bot%20gif.gif" width="30%"></p>
+<img src="./readme_assets/bot%20gif.gif" width="25%"></p>
 
 <p align="center">
-<img src="./readme_assets/first%20photo.jpg" width="30%"></p>
+<img src="./readme_assets/first%20photo.jpg" width="25%"></p>
