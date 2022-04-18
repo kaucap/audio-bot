@@ -1,16 +1,14 @@
 from aiogram import types
-from aiogram.types import ReplyKeyboardRemove
 from aiogram.dispatcher.filters import Command
 from aiogram.dispatcher.storage import FSMContext
-
-from db_api.schemas.user_request import Info
-from request import find_book, find_book_next_page
+from aiogram.types import ReplyKeyboardRemove
+from loguru import logger
 
 from loader import dp, bot
+from request import find_book
 from states import FindBook
-from keyboard.default.next_page_buttons import choice
-from loguru import logger
-from db_api import sql_commands as command
+from utils.book_information import if_search_results_have_pages
+from utils.handlers.common import clear_user_history_if_reach_limit, send_results_to_user, user_wants_see_next_page
 
 
 @logger.catch()
@@ -35,52 +33,25 @@ async def looking_book(message: types.Message, state: FSMContext):
         data = await state.get_data()
         book_result = await find_book(answer=data["book"], message=message, bot=bot)
         request = f'Поиск книги или автора под названием: {data["book"]}'
-        search_book_info = await command.choose_info(user_id=message.from_user.id)
-        if len(search_book_info) >= 20:
-            await Info.delete.where(message.from_user.id == Info.id).gino.status()
-        await command.add_info(id=message.from_user.id, request=request)
-        try:
-            if book_result:
-                await state.update_data(next_page_url=book_result)
-                await message.answer('Показать книги со следующей страницы?', reply_markup=choice)
-                await FindBook.choice.set()
-            else:
-                await message.answer('Книг больше нет')
-                await state.reset_state()
-        except AttributeError:
-            logger.error('Ошибка AttributeError')
-            await message.answer('В ходе поиска возникла ошибка, попробуйте снова.\n'
-                                 'Для этого пропишите команду /find_book')
-            await state.reset_state()
+        await clear_user_history_if_reach_limit(message=message, request=request)
+        pages = await if_search_results_have_pages(book_result)
+        information_for_search_books = {'pages': pages, 'state': state, 'message': message, 'current_state': FindBook}
+        await send_results_to_user(information_for_search_books)
 
 
 @logger.catch()
-@dp.message_handler(state=FindBook.choice)
+@dp.message_handler(state=FindBook.next_page)
 async def result(message: types.Message, state: FSMContext):
     answer = message.text
     if answer == "Да ✅" or answer == "Да":
-        logger.info('Бот приступил к открытию следующей страницы в команде /find_book')
-        await message.answer('Хорошо, сейчас покажу книги', reply_markup=ReplyKeyboardRemove())
-        data = await state.get_data()
-        book_result = await find_book_next_page(url=data["next_page_url"], message=message, bot=bot)
-        try:
-            if book_result:
-                await state.update_data(next_page_url=book_result)
-                await message.answer('Показать книги со следующей страницы?', reply_markup=choice)
-                await FindBook.choice.set()
-            else:
-                await message.answer('Книг больше нет')
-                await message.answer('Для того чтобы посмотреть список возможных команд введите /help')
-                await state.reset_state()
-        except AttributeError:
-            logger.error('Ошибка AttributeError')
-            await message.answer('В ходе поиска возникла ошибка, попробуйте снова.\n'
-                                 'Для этого пропишите команду /find_book')
-            await state.reset_state()
+        current_command = 'find_book'
+        information_for_search_books = {'command': current_command, 'message': message, 'state': state,
+                                        'bot': bot, 'current_state': FindBook}
+        await user_wants_see_next_page(information_for_search_books)
     elif answer == "Нет ❌" or answer == "Нет":
         await message.answer('Хорошо, поиск книг завершен.\nЧтобы узнать весь функционал введите комманду /help',
                              reply_markup=ReplyKeyboardRemove())
         await state.reset_state()
     else:
         await message.answer('Ошибка ввода! ⛔ \nВведите "Да" или "Нет"')
-        await FindBook.choice.set()
+        await FindBook.next_page.set()

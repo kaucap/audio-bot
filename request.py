@@ -1,6 +1,7 @@
 import aiohttp
 from bs4 import BeautifulSoup
 from fake_useragent import UserAgent
+
 from utils.book_information import book_information, get_genre
 
 
@@ -25,15 +26,7 @@ async def give_book_info(response, bot, message):
     else:
         await message.answer('К сожалению поиск не дал результатов. Попробуйте ввести другие данные')
 
-    paging = soup.find("div", class_="paging")
-    if paging:
-        paging_exist = paging.find("a", class_='page__nav--next')
-        if paging_exist:
-            return paging.find("a", class_='page__nav--next').get('href')
-        else:
-            return None
-    else:
-        return None
+    return soup
 
 
 async def find_book(answer, bot, message):
