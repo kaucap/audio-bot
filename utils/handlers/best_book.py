@@ -28,7 +28,7 @@ async def book_results_duration_week(message: types.Message, bot: aiogram.Bot) -
     return book_result
 
 
-async def send_results_duration_week(message, bot, state):
+async def send_results_duration_week(message: types.Message, bot: aiogram.Bot, state: FSMContext):
     book_result = await book_results_duration_week(message=message, bot=bot)
     pages = await if_search_results_have_pages(book_result)
     information_for_search_books = {'pages': pages, 'state': state, 'message': message, 'current_state': BestBook}
@@ -42,7 +42,7 @@ async def book_results_duration_month(message: types.Message, bot: aiogram.Bot) 
     return book_result
 
 
-async def send_results_duration_month(message, bot, state):
+async def send_results_duration_month(message: types.Message, bot: aiogram.Bot, state: FSMContext):
     book_result = await book_results_duration_month(message=message, bot=bot)
     pages = await if_search_results_have_pages(book_result)
     information_for_search_books = {'pages': pages, 'state': state, 'message': message, 'current_state': BestBook}
@@ -56,7 +56,7 @@ async def book_results_duration_all_time(message: types.Message, bot: aiogram.Bo
     return book_result
 
 
-async def send_results_duration_all_time(message, bot, state):
+async def send_results_duration_all_time(message: types.Message, bot: aiogram.Bot, state: FSMContext):
     book_result = await book_results_duration_all_time(message=message, bot=bot)
     pages = await if_search_results_have_pages(book_result)
     information_for_search_books = {'pages': pages, 'state': state, 'message': message, 'current_state': BestBook}

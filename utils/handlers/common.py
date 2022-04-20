@@ -54,7 +54,7 @@ async def send_results_to_user(information_for_search_books: dict):
         await attribute_error(information_for_search_books)
 
 
-async def show_books_from_next_page(information_for_search_books) -> bs4.BeautifulSoup:
+async def show_books_from_next_page(information_for_search_books: dict) -> bs4.BeautifulSoup:
     current_command = information_for_search_books['command']
     message = information_for_search_books['message']
     state = information_for_search_books['state']
@@ -67,7 +67,7 @@ async def show_books_from_next_page(information_for_search_books) -> bs4.Beautif
     return book_result
 
 
-async def user_wants_see_next_page(information_for_search_books):
+async def user_wants_see_next_page(information_for_search_books: dict):
     current_command = information_for_search_books['command']
     message = information_for_search_books['message']
     state = information_for_search_books['state']
